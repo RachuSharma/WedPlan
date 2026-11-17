@@ -1,0 +1,10 @@
+# Notes and course documents
+*.md
+# …but a README for GitHub is still allowed
+!README.md
+
+# Old version, not used by the live site
+_backup-before-cleanup/
+
+# macOS
+.DS_Store

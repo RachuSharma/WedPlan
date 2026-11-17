@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#a3121a">
+  <link rel="icon" type="image/svg+xml" href="../assets/icons/wedplan-mark.svg">
+  <title>Set up your wedding — WedPlan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="../js/storage.js" defer></script>
+  <script src="../js/nepali.js" defer></script>
+  <script src="../js/setup.js" defer></script>
+</head>
+<body class="setup-page">
+  <aside class="setup-greeting" aria-label="Congratulations">
+    <span class="greeting-ornament" aria-hidden="true">✿</span>
+    <p class="greeting-nepali" lang="ne">शुभ विवाह</p>
+    <span class="greeting-rule" aria-hidden="true"></span>
+    <p class="greeting-title">Congratulations on your wedding!</p>
+    <p class="greeting-wish">May your new journey together be filled with love, laughter and blessings.</p>
+    <span class="greeting-ornament" aria-hidden="true">✿</span>
+  </aside>
+  <header class="setup-header">
+    <a class="brand" href="../index.html" aria-label="WedPlan"><img class="brand-mark" src="../assets/icons/wedplan-mark.svg" alt=""><span class="brand-name">Wed<span>Plan</span></span></a>
+    <span class="setup-step">YOUR WEDDING PROFILE</span>
+  </header>
+  <main class="setup-wrap">
+    <section class="setup-intro"><p class="greeting-ribbon"><span lang="ne">शुभ विवाह</span> · Congratulations on your wedding!</p><p class="eyebrow">LET’S MAKE THIS YOURS</p><h1>Let’s start with <em>the two of you.</em></h1><p>Just the basics for now. Everything else can be added later.</p></section>
+    <section class="setup-restore" id="setup-restore" aria-labelledby="restore-title">
+      <span class="setup-restore-icon" aria-hidden="true">↺</span>
+      <div class="setup-restore-copy"><h2 id="restore-title">Already planning with family?</h2><p>Load the backup file from My details, from your other phone or one your family sent you, and carry on where you left off.</p><p class="setup-restore-error" id="restore-error" role="alert" hidden></p></div>
+      <label class="secondary-button file-button">Load a backup<input type="file" id="restore-file" accept="application/json,.json" hidden></label>
+    </section>
+    <p class="setup-or" id="setup-or"><span>or start a new plan</span></p>
+    <form id="profile-form" class="setup-form">
+      <section class="setup-card">
+        <div class="setup-card-heading"><span class="setup-number">01</span><div><h2>The couple & the day</h2><p>Start with the details everyone will plan around.</p></div></div>
+        <div class="setup-fields">
+          <label class="setup-field">Bride’s name<input id="bride-name" name="brideName" required maxlength="80" autocomplete="given-name" placeholder="Full name"></label>
+          <label class="setup-field">Groom’s name<input id="groom-name" name="groomName" required maxlength="80" autocomplete="given-name" placeholder="Full name"></label>
+          <label class="setup-field">Wedding date<input id="wedding-date" name="weddingDate" type="date" required></label>
+          <label class="setup-field">Wedding location<input id="wedding-location" name="location" required maxlength="120" placeholder="City, venue, or both"></label>
+          <label class="setup-field">Total wedding budget <span class="optional-label">Optional</span><input id="wedding-budget" name="budget" type="number" min="0" step="1" placeholder="Add an amount"></label>
+          <label class="setup-field">Budget currency<select id="budget-currency" name="currency"><option value="NPR">NPR — Nepalese rupee</option><option value="INR">INR — Indian rupee</option><option value="USD">USD — US dollar</option></select></label>
+        </div>
+      </section>
+      <section class="setup-card">
+        <div class="setup-card-heading"><span class="setup-number">02</span><div><h2>Which side are you planning from?</h2><p>We’ll put your family’s side first in lists and exchange planning.</p></div></div>
+        <div class="side-choices" role="radiogroup" aria-label="Planning side">
+          <label><input type="radio" name="planningSide" value="bride" required><span><strong>Bride’s side</strong><small>I’m planning with the bride’s family</small></span></label>
+          <label><input type="radio" name="planningSide" value="groom"><span><strong>Groom’s side</strong><small>I’m planning with the groom’s family</small></span></label>
+        </div>
+        <p class="side-guidance" id="side-guidance">Choose the family you’re planning for. Shopping, bookings, expenses and ceremonies will be set to this side.</p>
+      </section>
+      <details class="setup-card family-setup-card" id="family">
+        <summary class="setup-card-heading"><span class="setup-number">03</span><div><h2>Your family circle <span class="optional-label">Optional</span></h2><p>Add relatives now or later in My details. WedPlan will count parents, siblings, aunts, uncles and in-laws for you.</p></div></summary>
+        <div class="family-summary" id="family-summary" aria-live="polite">Add family members to see your family count.</div>
+        <div class="family-list" id="family-list"></div>
+        <button type="button" class="add-family-button" id="add-family-member">＋ Add a family member</button>
+      </details>
+      <div class="setup-submit-row"><p>Your details stay in this browser and can be changed later in My details.</p><button class="primary-button" type="submit">Save and continue <span aria-hidden="true">→</span></button></div>
+      <p class="setup-error" id="setup-error" role="alert" hidden></p>
+    </form>
+  </main>
+</body>
+</html>
