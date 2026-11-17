@@ -21,28 +21,32 @@
 
   /* Traditional Nepali wedding ceremonies: [name, hosted by, about] */
   const ceremonies = [
-    ['Engagement (Sagai)', 'both', 'The couple exchange rings in front of both families.'],
-    ['Mehendi', 'bride', 'Henna for the bride, with songs and dancing among family.'],
-    ['Haldi', 'both', 'Turmeric paste blessing for the bride and groom.'],
-    ['Tilak', 'bride', 'Bride’s family visits the groom’s home with tilak, gifts and blessings.'],
+    ['Engagement & Tika Talo', 'both', 'Both families come together: tika and gifts for the groom, the couple exchange rings, and elders give blessings.'],
+    ['Saipata (Sagun)', 'groom', 'The groom’s family sends clothes, jewellery, fruit and sweets to the bride’s home.'],
+    ['Purbanga (Nandi Puja)', 'both', 'Puja for the ancestors before the wedding, done by each family at its own home.'],
+    ['Haldi & Mehendi', 'both', 'Turmeric paste blessing for the bride and groom, and henna for the bride, with songs and dancing among family.'],
     ['Janti Prasthan', 'groom', 'The groom’s procession leaves with Naumati Baja music.'],
+    ['Ratyauli', 'groom', 'While the Janti is away, the women at the groom’s home sing, dance and act out fun skits all night.'],
     ['Swagat', 'bride', 'Bride’s family welcomes the Janti at the wedding venue.'],
     ['Swayamvar', 'both', 'Bride and groom exchange garlands.'],
     ['Kanyadaan', 'bride', 'The bride’s parents give their daughter’s hand in marriage.'],
     ['Sindoor Halne & Pote', 'both', 'The groom applies sindoor and ties the pote.'],
     ['Saptapadi', 'both', 'Seven steps and vows around the sacred fire.'],
     ['Bidaai', 'bride', 'An emotional farewell as the bride leaves her parents’ home.'],
+    ['Dhoka Chhekne', 'groom', 'The groom’s sisters block the door until the couple gives them a gift.'],
     ['Ghar Bhitryaune', 'groom', 'Welcoming the bride into the groom’s home.'],
     ['Mukh Herne', 'groom', 'Family members see the bride’s face and give gifts.'],
-    ['Reception (Bhoj)', 'both', 'Wedding feast and celebration with guests.']
+    ['Reception (Bhoj)', 'both', 'Wedding feast and celebration with guests.'],
+    ['Duran (Dwiragaman)', 'both', 'A few days after the wedding, the couple visit the bride’s parents with gifts.']
   ];
 
   /* The rituals inside each ceremony, ticked off one by one on the Ceremonies page */
   const ceremonyRituals = {
-    'Engagement (Sagai)': ['Ganesh puja with the pandit', 'Sagun offered to the couple', 'Exchange of rings', 'Tika and blessings from elders'],
-    'Mehendi': ['Mehendi for the bride’s hands and feet', 'Mehendi for the women of the family', 'Songs and dancing'],
-    'Haldi': ['Haldi paste applied by family', 'Blessings from elders', 'Bath after the haldi'],
-    'Tilak': ['Tilak and tika for the groom', 'Gifts and sagun for the groom', 'Blessings from the bride’s family', 'Feast for the guests'],
+    'Engagement & Tika Talo': ['Ganesh puja with the pandit', 'Tika for the groom', 'Gifts and sagun for the groom', 'Exchange of rings', 'Tika and blessings from elders', 'Feast for the guests'],
+    'Haldi & Mehendi': ['Haldi paste applied by family', 'Blessings from elders', 'Bath after the haldi', 'Mehendi for the bride’s hands and feet', 'Mehendi for the women of the family', 'Songs and dancing'],
+    'Saipata (Sagun)': ['Pack clothes and jewellery for the bride', 'Prepare fruits, sweets and sagun', 'Send the saipata to the bride’s home'],
+    'Purbanga (Nandi Puja)': ['Puja with the pandit at home', 'Nandi shraddha for the ancestors', 'Matrika puja', 'Blessings from elders'],
+    'Ratyauli': ['Invite the women of the family and neighbours', 'Songs and dancing at home', 'Ratyauli skits and fun', 'Food and snacks for everyone'],
     'Janti Prasthan': ['Puja at the groom’s home', 'Mother’s blessing for the groom', 'Janti leaves with Naumati Baja'],
     'Swagat': ['Arati and tika for the groom', 'Garlands for the Janti', 'Sweets and drinks for the Janti'],
     'Swayamvar': ['Exchange of jaimala', 'Blessings from both families'],
@@ -50,37 +54,62 @@
     'Sindoor Halne & Pote': ['Groom applies sindoor', 'Groom ties the pote', 'Blessings from elders'],
     'Saptapadi': ['Sacred fire lit by the pandit', 'Seven steps around the fire', 'Seven vows'],
     'Bidaai': ['Farewell blessings from the bride’s parents', 'Bride leaves for the groom’s home'],
+    'Dhoka Chhekne': ['Groom’s sisters block the door', 'Gift for the sisters to open the door', 'Couple steps inside together'],
+    'Duran (Dwiragaman)': ['Couple visits the bride’s parents', 'Gifts and sweets for the bride’s family', 'Blessings and a meal together'],
     'Ghar Bhitryaune': ['Arati for the bride at the door', 'Bride steps into her new home', 'Puja at the family shrine'],
     'Mukh Herne': ['Family members see the bride’s face', 'Gifts and blessings for the bride'],
     'Reception (Bhoj)': ['Welcome the guests', 'Couple greets every family', 'Wedding feast']
   };
-  const ritualsFor = ceremonyName => ceremonyRituals[Object.keys(ceremonyRituals).find(key => key.toLowerCase() === String(ceremonyName).trim().toLowerCase())] || [];
+  /* Ceremonies that happen together and are planned as one. Older plans may have saved the parts separately
+     (or under an older name, like "Tilak"); those names still find the combined ceremony's rituals and needs. */
+  const combinedCeremonies = {
+    'Engagement & Tika Talo': ['engagement (sagai)', 'engagement', 'sagai', 'tika talo', 'tilak'],
+    'Haldi & Mehendi': ['haldi', 'mehendi', 'mehndi']
+  };
+  const canonicalName = value => {
+    const key = String(value || '').trim().toLowerCase();
+    const combined = Object.keys(combinedCeremonies).find(name => combinedCeremonies[name].includes(key));
+    return (combined || key).toLowerCase();
+  };
+  const sameCeremony = (a, b) => canonicalName(a) === canonicalName(b);
+  const ritualsFor = ceremonyName => ceremonyRituals[Object.keys(ceremonyRituals).find(key => sameCeremony(key, ceremonyName))] || [];
   const makeRituals = names => names.map(ritual => ({ id: uid('ritual'), name: ritual, done: false }));
 
   /* Ceremonies belong to the engagement or the wedding */
   const stages = [['engagement', 'Engagement'], ['wedding', 'Wedding']];
-  const engagementCeremonies = ['engagement (sagai)', 'engagement', 'sagai', 'tilak', 'ring ceremony'];
-  const stageFor = ceremonyName => engagementCeremonies.includes(String(ceremonyName).trim().toLowerCase()) ? 'engagement' : 'wedding';
+  const stageFor = ceremonyName => ['engagement & tika talo', 'ring ceremony'].includes(canonicalName(ceremonyName)) ? 'engagement' : 'wedding';
 
   /* What each ceremony needs: tasks, things to buy and things to book.
      Side is who usually takes care of it; 'both' goes to the side you're planning for. */
   const ceremonyNeeds = {
-    'Engagement (Sagai)': { occasion: 'tilak',
-      tasks: [['Fix the engagement date with the pandit', 'both'], ['Make the engagement guest list', 'both'], ['Send engagement invitations', 'both']],
-      buy: [['Engagement rings', 'both'], ['Engagement outfit for the bride', 'bride'], ['Engagement outfit for the groom', 'groom'], ['Sagun: fruits, sweets & dahi', 'both'], ['Gifts for the other family', 'both']],
+    'Engagement & Tika Talo': { occasion: 'tilak',
+      tasks: [['Fix the engagement & Tika Talo date with the pandit', 'both'], ['Make the engagement guest list', 'both'], ['Send engagement invitations', 'both'], ['Pack Tika Talo gifts for the groom’s family', 'bride'], ['Prepare the home to welcome the bride’s family', 'groom']],
+      buy: [['Engagement rings', 'both'], ['Engagement outfit for the bride', 'bride'], ['Engagement outfit for the groom', 'groom'], ['Tika thali & puja items', 'bride'], ['Sagun: fruits, sweets & dahi', 'both'], ['Gifts for the other family', 'both']],
       book: [['Engagement venue', 'both'], ['Engagement catering', 'both'], ['Photographer', 'both'], ['Makeup artist for the engagement', 'bride']] },
-    'Mehendi': { occasion: 'haldiMehendi',
-      tasks: [['Book a mehendi artist', 'bride'], ['Plan mehendi songs and dancing', 'bride']],
-      buy: [['Mehendi cones', 'bride'], ['Mehendi outfit for the bride', 'bride'], ['Snacks & sweets for guests', 'both']],
-      book: [['Mehendi artist', 'bride'], ['Dhol / music', 'both']] },
-    'Haldi': { occasion: 'haldiMehendi',
-      tasks: [['Prepare haldi & ubtan paste', 'both']],
-      buy: [['Haldi & ubtan ingredients', 'both'], ['Yellow outfit for the bride', 'bride'], ['Yellow outfit for the groom', 'groom'], ['Marigold flowers & garlands', 'both']],
-      book: [['Decorator', 'both'], ['Photographer', 'both']] },
-    'Tilak': { occasion: 'tilak',
-      tasks: [['Fix the Tilak date with the pandit', 'bride'], ['Pack tilak gifts for the groom’s family', 'bride']],
-      buy: [['Tilak thali & puja items', 'bride'], ['Sagun: fruits, sweets & dahi', 'bride'], ['Gifts for the groom’s family', 'bride'], ['Engagement rings', 'both']],
-      book: [['Engagement venue', 'both'], ['Photographer', 'both']] },
+    'Saipata (Sagun)': { occasion: 'wedding',
+      tasks: [['Pack the saipata gifts for the bride', 'groom']],
+      buy: [['Clothes for the bride (saipata)', 'groom'], ['Jewellery for the bride', 'groom'], ['Fruits & sweets for the saipata', 'groom']],
+      book: [] },
+    'Purbanga (Nandi Puja)': { occasion: 'general',
+      tasks: [['Fix the Purbanga puja time with the pandit', 'both']],
+      buy: [['Puja samagri', 'both']],
+      book: [['Pandit / purohit', 'both']] },
+    'Ratyauli': { occasion: 'wedding',
+      tasks: [['Invite the women for Ratyauli', 'groom']],
+      buy: [['Snacks & food for Ratyauli', 'groom']],
+      book: [['Madal / music for Ratyauli', 'groom']] },
+    'Dhoka Chhekne': { occasion: 'general',
+      tasks: [['Keep gift envelopes ready for the sisters at the door', 'groom']],
+      buy: [],
+      book: [] },
+    'Duran (Dwiragaman)': { occasion: 'general',
+      tasks: [['Plan the Duran visit to the bride’s home', 'both']],
+      buy: [['Gifts & sweets for the bride’s family', 'groom']],
+      book: [] },
+    'Haldi & Mehendi': { occasion: 'haldiMehendi',
+      tasks: [['Prepare haldi & ubtan paste', 'both'], ['Book a mehendi artist', 'bride'], ['Plan the songs and dancing', 'both']],
+      buy: [['Haldi & ubtan ingredients', 'both'], ['Yellow outfit for the bride', 'bride'], ['Yellow outfit for the groom', 'groom'], ['Marigold flowers & garlands', 'both'], ['Mehendi cones', 'bride'], ['Mehendi outfit for the bride', 'bride'], ['Snacks & sweets for guests', 'both']],
+      book: [['Mehendi artist', 'bride'], ['Decorator', 'both'], ['Dhol / music', 'both'], ['Photographer', 'both']] },
     'Janti Prasthan': { occasion: 'wedding',
       tasks: [['Confirm the Janti guest list', 'groom'], ['Arrange cars for the Janti', 'groom']],
       buy: [['Groom’s Daura Suruwal / sherwani', 'groom'], ['Dhaka topi', 'groom'], ['Groom’s garland', 'groom']],
@@ -126,7 +155,7 @@
   /* Occasions used to group the shopping list. */
   /* Bookings can also cover every ceremony at once (one photographer, one baja band…) */
   const allCeremonies = ['allCeremonies', 'All ceremonies'];
-  const occasions = [['tilak', 'Engagement & Tilak'], ['haldiMehendi', 'Haldi & Mehendi'], ['wedding', 'Wedding day'], ['reception', 'Reception'], ['general', 'General & other']];
+  const occasions = [['tilak', 'Engagement & Tika Talo'], ['haldiMehendi', 'Haldi & Mehendi'], ['wedding', 'Wedding day'], ['reception', 'Reception'], ['general', 'General & other']];
 
   const bookingOccasions = [allCeremonies, ...occasions];
 
@@ -137,7 +166,7 @@
       book: [['Photographer & videographer', 'both', 'One team for every ceremony'], ['Naumati Baja / music band', 'both', 'One group for every ceremony'], ['Decorator', 'both', 'One decorator for every ceremony'], ['Transport', 'both', 'Cars for every ceremony'], ['Event planner / coordinator', 'both'], ['Videographer for a wedding film', 'both'], ['Drone photography', 'both'], ['Generator / backup power', 'both'], ['Security & parking attendants', 'both']]
     },
     tilak: {
-      buy: [['Engagement rings', 'both'], ['Tilak thali & puja items', 'bride'], ['Sagun: fruits, sweets & dahi', 'bride'], ['Gifts for the groom’s family', 'bride'], ['Engagement outfits', 'both'], ['Tilak sari / outfit for the bride’s mother', 'bride'], ['Dry fruits & mithai boxes', 'both'], ['Coconut, supari & paan for the rituals', 'both'], ['Ring platter / decorated thali', 'both']],
+      buy: [['Engagement rings', 'both'], ['Tika thali & puja items', 'bride'], ['Sagun: fruits, sweets & dahi', 'bride'], ['Gifts for the groom’s family', 'bride'], ['Engagement outfits', 'both'], ['Tika Talo sari / outfit for the bride’s mother', 'bride'], ['Dry fruits & mithai boxes', 'both'], ['Coconut, supari & paan for the rituals', 'both'], ['Ring platter / decorated thali', 'both']],
       book: [['Engagement venue', 'both'], ['Photographer', 'both'], ['Florist for the ring ceremony', 'both']]
     },
     haldiMehendi: {
@@ -173,7 +202,7 @@
       ['Photographer guide', 'both', 'Tells the photographer which moments and family groups to capture']
     ] },
     tilak: { help: [
-      ['Ring & tilak thali keeper', 'both', 'Keeps the rings, tilak thali and sagun safe until the ceremony'],
+      ['Ring & tika thali keeper', 'both', 'Keeps the rings, tika thali and sagun safe until the ceremony'],
       ['Gift register writer', 'both', 'Writes down every gift and envelope with the giver’s name']
     ] },
     haldiMehendi: { help: [
@@ -227,8 +256,9 @@
       suggestions: {
         title: 'Start from traditional ceremonies',
         intro: 'Pick the Nepali wedding ceremonies your families will celebrate.',
-        groups: [{ key: 'all', sections: [{ key: 'all', items: ceremonies.map(([name, side, about]) => ({ name, side: ownSide(side), notes: about, detail: `${about} · ${sideNames[ownSide(side)]}` })) }] }],
-        exists: (record, item) => record.name.toLowerCase() === item.name.toLowerCase(),
+        // Only ceremonies your family hosts, plus shared ones: the bride's and groom's families have different ceremonies
+        groups: [{ key: 'all', sections: [{ key: 'all', items: ceremonies.filter(([, side]) => side === 'both' || side === mySide).map(([name, side, about]) => ({ name, side: ownSide(side), notes: about, detail: `${about} · ${side === 'both' ? 'Both families' : 'Your family'}` })) }] }],
+        exists: (record, item) => sameCeremony(record.name, item.name),
         toRecord: item => ({ name: item.name, stage: stageFor(item.name), date: '', time: '', location: '', side: item.side, status: 'planning', notes: item.notes, rituals: makeRituals(ritualsFor(item.name)) })
       }
     },
@@ -288,7 +318,20 @@
   // Shopping, Bookings and Budget show only your side; other records stay saved but hidden
   const otherSide = config.ownSideOnly ? allSaved.filter(item => !isMine(item)) : [];
   let records = config.ownSideOnly ? allSaved.filter(isMine) : allSaved;
-  if (name === 'events') records = records.map(item => item.stage ? item : { ...item, stage: stageFor(item.name) });
+  if (name === 'events') {
+    records = records.map(item => item.stage ? item : { ...item, stage: stageFor(item.name) });
+    // One-time move: older plans saved the parts of a combined ceremony separately (e.g. Haldi and Mehendi).
+    // The first one found is renamed to the combined ceremony; any other is left as it was, so nothing is lost.
+    let moved = false;
+    Object.entries(combinedCeremonies).forEach(([combined, oldNames]) => {
+      const isOld = item => oldNames.includes(String(item.name).trim().toLowerCase());
+      if (!records.some(isOld) || records.some(item => item.name === combined)) return;
+      const first = records.find(isOld);
+      records = records.map(item => item === first ? { ...item, name: combined, stage: stageFor(combined) } : item);
+      moved = true;
+    });
+    if (moved) storage.set(config.key, [...records, ...otherSide]);
+  }
   let editing = null;
   /* Shopping and Bookings open showing only your own side (bride or groom), from the wedding profile */
   const filters = Object.fromEntries(filterKeys.map(key => [key, 'all']));
@@ -384,7 +427,7 @@
 
   /* ---------- Ceremonies: tasks, shopping and bookings each one needs ---------- */
   let linkedFor = []; // ceremony names whose "things you'll need" panel is open
-  const needsFor = ceremonyName => ceremonyNeeds[Object.keys(ceremonyNeeds).find(key => key.toLowerCase() === String(ceremonyName).toLowerCase())];
+  const needsFor = ceremonyName => ceremonyNeeds[Object.keys(ceremonyNeeds).find(key => sameCeremony(key, ceremonyName))];
   // Only ceremonies with something for your side get suggestions
   const hasNeeds = ceremonyName => { const needs = needsFor(ceremonyName); return Boolean(needs) && ['tasks', 'buy', 'book'].some(kind => (needs[kind] || []).some(([, side]) => ownSide(side) === mySide)); };
   const linkedKinds = [

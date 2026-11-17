@@ -25,7 +25,7 @@ No sign-up, no download. Just open the link.
 
 The **Overview** shows a small "Start here" guide:
 
-1. **Choose your ceremonies** – Tilak, Swayamvar, Kanyadaan, Bidaai and more. Each one comes with its traditional rituals to tick off.
+1. **Choose your ceremonies** – Tika Talo, Swayamvar, Kanyadaan, Bidaai and more. Each one comes with its traditional rituals to tick off.
 2. **Add your guests** – start with close family, add the rest little by little.
 3. **Share out the work** – give family members jobs: buying, booking, looking after the guests or the pandit's puja items.
 

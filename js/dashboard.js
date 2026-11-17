@@ -13,7 +13,7 @@
     if (!node) return;
     const hasPerson = key => list(key).some(item => item.responsible);
     const steps = [
-      { done: list('events').length > 0, title: 'Choose your ceremonies', text: 'Pick Tilak, Swayamvar, Bidaai and the others your families will celebrate. Their rituals come with them.', href: 'pages/events.html', cta: 'Choose ceremonies' },
+      { done: list('events').length > 0, title: 'Choose your ceremonies', text: 'Pick Tika Talo, Swayamvar, Bidaai and the others your families will celebrate. Their rituals come with them.', href: 'pages/events.html', cta: 'Choose ceremonies' },
       { done: list('guests').length > 0, title: 'Add your guests', text: 'Start with close family. You can add the rest little by little.', href: 'pages/guests.html', cta: 'Add guests' },
       { done: list('helpers').length > 0 || hasPerson('shopping') || hasPerson('bookings'), title: 'Share out the work', text: 'Ask family to help: someone for the gifts, someone for the pandit’s puja items, someone for the guests.', href: 'pages/helpers.html', cta: 'Hand out duties' }
     ];
@@ -46,7 +46,7 @@
     node.innerHTML = upcoming.length
       ? upcoming.map(event => `<a class="record-card mini" href="pages/events.html"><div class="record-card-main"><strong>${escape(event.name)}</strong><p>${escape(app.withBS(dateLabel(event.date), event.date))}${event.location ? ` · ${escape(event.location)}` : ''}</p></div><span class="days-badge">${daysUntil(event.date) === 0 ? 'Today' : `${daysUntil(event.date)} days`}</span></a>`).join('')
         + (unscheduled ? `<p class="panel-note">${unscheduled} more ${unscheduled === 1 ? 'ceremony needs' : 'ceremonies need'} a date.</p>` : '')
-      : `<div class="dashboard-empty-task">${unscheduled ? `${unscheduled} ${unscheduled === 1 ? 'ceremony is' : 'ceremonies are'} waiting for a date.` : 'No ceremonies yet. Add Tilak, Swayamvar, Bidaai and more from Ceremonies.'}</div>`;
+      : `<div class="dashboard-empty-task">${unscheduled ? `${unscheduled} ${unscheduled === 1 ? 'ceremony is' : 'ceremonies are'} waiting for a date.` : 'No ceremonies yet. Add Tika Talo, Swayamvar, Bidaai and more from Ceremonies.'}</div>`;
   }
 
   function renderAttention() {

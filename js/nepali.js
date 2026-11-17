@@ -51,12 +51,14 @@
 
   /* Traditional ceremony names in Devanagari, shown under the English name */
   const ceremonyNames = {
-    'engagement (sagai)': 'सगाई', 'engagement': 'सगाई', 'sagai': 'सगाई',
-    'mehendi': 'मेहेन्दी', 'haldi': 'हल्दी', 'tilak': 'तिलक',
+    'engagement & tika talo': 'सगाई र टीका टालो', 'engagement (sagai)': 'सगाई', 'engagement': 'सगाई', 'sagai': 'सगाई',
+    'haldi & mehendi': 'हल्दी र मेहेन्दी', 'mehendi': 'मेहेन्दी', 'haldi': 'हल्दी', 'tika talo': 'टीका टालो', 'tilak': 'टीका टालो',
     'janti prasthan': 'जन्ती प्रस्थान', 'swagat': 'स्वागत', 'swayamvar': 'स्वयम्बर',
     'kanyadaan': 'कन्यादान', 'sindoor halne & pote': 'सिन्दूर हाल्ने र पोते', 'saptapadi': 'सप्तपदी',
     'bidaai': 'बिदाइ', 'ghar bhitryaune': 'घर भित्र्याउने', 'mukh herne': 'मुख हेर्ने',
-    'reception (bhoj)': 'भोज', 'reception': 'भोज', 'bhoj': 'भोज'
+    'reception (bhoj)': 'भोज', 'reception': 'भोज', 'bhoj': 'भोज',
+    'saipata (sagun)': 'साइपाटा', 'saipata': 'साइपाटा', 'purbanga (nandi puja)': 'पूर्वाङ्ग (नान्दी पूजा)', 'purbanga': 'पूर्वाङ्ग',
+    'ratyauli': 'रत्यौली', 'dhoka chhekne': 'ढोका छेक्ने', 'duran (dwiragaman)': 'दुरन (द्विरागमन)', 'duran': 'दुरन'
   };
   const ceremonyName = name => ceremonyNames[String(name || '').trim().toLowerCase()] || '';
 
