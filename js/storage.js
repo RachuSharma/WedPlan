@@ -30,7 +30,7 @@
       catch { return false; }
     },
     /* Every key a backup carries. Add new keys here so backup, restore and "Start over" include them. */
-    dataKeys: ['profile', 'tasks', 'events', 'guests', 'budgetItems', 'shopping', 'bookings', 'helpers', 'activity', 'activitySeen', 'me', 'guideHidden', 'gifts', 'vendors'],
+    dataKeys: ['profile', 'tasks', 'events', 'guests', 'budgetItems', 'shopping', 'bookings', 'helpers', 'activity', 'activitySeen', 'me', 'guideHidden', 'tipsHidden', 'tabsHinted', 'gifts', 'vendors'],
     /* Read a backup file's text and save its lists. Returns true, or false if it isn't a WedPlan backup. */
     restore(text) {
       let backup;

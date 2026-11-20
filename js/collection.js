@@ -456,7 +456,7 @@
     if (!blocks) return '';
     return `<section class="linked-panel" id="linked-panel">
       <div class="task-form-heading"><div><p class="eyebrow">PLAN AHEAD</p><h3>Things you’ll need for ${escape(shown.length <= 2 ? shown.join(' & ') : 'these ceremonies')}</h3><p class="linked-intro">Ticked items are added to your Tasks, Shopping and Bookings. Untick anything you don’t need.</p></div><button class="close-form" type="button" data-action="linked-close" aria-label="Close">×</button></div>
-      <form id="linked-form">${blocks}<div class="form-actions"><button class="secondary-button" type="button" data-action="linked-close">Not now</button><button class="primary-button" type="submit"><span aria-hidden="true">＋</span> Add ticked items</button></div></form>
+      <form id="linked-form">${blocks}<div class="form-actions picker-actions"><button class="secondary-button" type="button" data-action="linked-close">Not now</button><button class="primary-button" type="submit" data-picker-submit data-noun="ticked"><span aria-hidden="true">＋</span> Add ticked items</button></div></form>
     </section>`;
   }
   function addLinked(chosen) {
@@ -505,7 +505,7 @@
       <form id="suggestion-form">
         ${tabs ? `<div class="occasion-tabs" role="tablist">${groups.map(group => `<button type="button" role="tab" class="occasion-tab${group === active ? ' selected' : ''}" aria-selected="${group === active}" data-group="${group.key}">${group.label}</button>`).join('')}</div>` : ''}
         ${groups.map(group => `<div class="suggestion-group"${group === active || !tabs ? '' : ' hidden'} data-group-panel="${group.key}">${group.sections.map(section => sectionHtml(section, group)).join('')}</div>`).join('')}
-        <div class="form-actions"><button class="primary-button" type="submit"><span aria-hidden="true">＋</span> Add selected</button></div>
+        <div class="form-actions picker-actions"><button class="primary-button" type="submit" data-picker-submit data-noun="selected"><span aria-hidden="true">＋</span> Add selected</button></div>
       </form>
     </details>`;
   }
@@ -581,7 +581,9 @@
   const daysAgo = iso => { const days = Math.floor((Date.now() - new Date(iso)) / 86400000); return days <= 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`; };
 
   /* Inline cost box, so a price can be typed straight into a row */
-  const amountInput = (record, attrs = '') => `<label class="amount-input"><span>${escape(app.profile?.currency || 'NPR')}</span><input type="number" min="0" step="any" inputmode="decimal" placeholder="Add cost" value="${record.amount == null || record.amount === '' ? '' : escape(String(record.amount))}" data-amount ${attrs} aria-label="Cost for ${escape(record.name)}"></label>`;
+  // A Save button appears as soon as a cost is typed, so it's clear how to confirm it (user testing)
+  const amountInput = (record, attrs = '') => `<span class="amount-wrap"><label class="amount-input"><span>${escape(app.profile?.currency || 'NPR')}</span><input type="number" min="0" step="any" inputmode="decimal" placeholder="Add cost" value="${record.amount == null || record.amount === '' ? '' : escape(String(record.amount))}" data-amount ${attrs} aria-label="Cost for ${escape(record.name)}"></label><button type="button" class="amount-save" data-action="amount-save" hidden>Save</button></span>`;
+  let askingCost = null; // id of the item just bought/booked whose "What did it cost?" box is open
   const hasAmount = fieldKeys.includes('amount');
 
   /* ---------- Ceremonies: ritual checklist inside each ceremony ---------- */
@@ -692,6 +694,10 @@
       ${hasAmount ? amountInput(record) : ''}
       <div class="record-actions">${canThank(record) && !record.thankedAt ? `<a class="remind-action thank-action" data-action="thank-send" href="${escape(thankLink(record))}" target="_blank" rel="noopener">Say thanks</a>` : ''}${canRemind ? `<button type="button" class="remind-action" data-action="remind">Remind</button>` : ''}${name === 'events' && hasNeeds(record.name) ? `<button type="button" class="remind-action" data-action="linked">What’s needed</button>` : ''}<button type="button" data-action="edit">Edit</button><button type="button" class="delete-action" data-action="delete">Remove</button></div>
       ${remindPanel}
+      ${askingCost === record.id ? `<form class="remind-panel cost-ask" data-cost-ask>
+        <p class="remind-title">${name === 'bookings' ? 'Booked! What does it cost?' : 'Bought! What did it cost?'}</p>
+        <div class="remind-actions"><label class="amount-input"><span>${escape(app.profile?.currency || 'NPR')}</span><input type="number" name="amount" min="0" step="any" inputmode="decimal" placeholder="0" required aria-label="Cost of ${escape(record.name)}"></label><button class="primary-button" type="submit">Save cost</button><button class="text-button" type="button" data-action="cost-skip">Skip</button></div>
+      </form>` : ''}
     </article>`;
   }
 
@@ -722,6 +728,16 @@
     }).join('');
   }
 
+  /* The "Add selected" button sticks to the bottom of the screen while you tick, says how many,
+     and is only active once something is ticked (user testing: people couldn't find it) */
+  function updatePickerButton(form) {
+    const button = form?.querySelector('[data-picker-submit]');
+    if (!button) return;
+    const count = form.querySelectorAll('input[type="checkbox"]:checked:not(:disabled)').length;
+    button.disabled = !count;
+    button.innerHTML = count ? `<span aria-hidden="true">＋</span> Add ${count} ${button.dataset.noun}` : 'Tick items to add';
+  }
+
   function render() {
     let shown = records.filter(item => filterKeys.every(key => filters[key] === 'all' || (item[key] || (key === 'type' ? 'buy' : '')) === filters[key]));
     if (config.sortBy) shown = [...shown].sort((a, b) => (a[config.sortBy] || '9999').localeCompare(b[config.sortBy] || '9999'));
@@ -730,7 +746,7 @@
     if (name === 'budget') {
       mount.innerHTML = `${summaryHtml()}
       <section class="collection-page">
-        <div class="collection-heading"><div><p class="eyebrow">EXTRA COSTS</p><h2>${escape(config.title)}</h2><p>${escape(config.intro)}</p></div><button class="primary-button" type="button" data-action="add"><span aria-hidden="true">＋</span> Add expense</button></div>
+        <div class="collection-heading"><div><p class="eyebrow">EXTRA COSTS</p><h2>${escape(config.title)}</h2><p>${escape(config.intro)}</p></div></div>
         ${formHtml()}
       </section>
       ${costListHtml()}`;
@@ -738,7 +754,7 @@
     }
     mount.innerHTML = `${summaryHtml()}
       <section class="collection-page">
-        <div class="collection-heading"><div><p class="eyebrow">YOUR ${config.title.toUpperCase()}</p><h2>${records.length} ${records.length === 1 ? config.singular : config.plural}</h2><p>${escape(config.intro)}</p></div><button class="primary-button" type="button" data-action="add"><span aria-hidden="true">＋</span> Add ${config.singular}</button></div>
+        <div class="collection-heading"><div><p class="eyebrow">YOUR ${config.title.toUpperCase()}</p><h2>${records.length} ${records.length === 1 ? config.singular : config.plural}</h2><p>${escape(config.intro)}</p></div></div>
         ${linkedHtml()}
         ${suggestionsHtml()}
         ${formHtml()}
@@ -759,7 +775,19 @@
     return '';
   }
 
+  // Every redraw starts the pickers' buttons in the right state
+  const renderList = render;
+  render = () => { renderList(); mount.querySelectorAll('#suggestion-form, #linked-form').forEach(updatePickerButton); };
+
   /* ---------- Actions ---------- */
+  /* "Add new …" sits at the top of the page, next to the title (user testing: the floating button covered
+     the list and was mistaken for the suggestions' "Add selected") */
+  const newRecord = () => name === 'events' ? { stage: filters.stage && filters.stage !== 'all' ? filters.stage : 'wedding' } : {};
+  const pageHeader = document.querySelector('.page-header');
+  if (pageHeader && !pageHeader.querySelector('[data-header-add]')) {
+    pageHeader.insertAdjacentHTML('beforeend', `<button class="primary-button" type="button" data-header-add><span aria-hidden="true">＋</span> Add new ${escape(config.singular)}</button>`);
+    pageHeader.querySelector('[data-header-add]').addEventListener('click', () => openForm(newRecord()));
+  }
   function openForm(record) {
     editing = record;
     render();
@@ -780,7 +808,9 @@
     if (!button) return;
     const record = records.find(item => item.id === button.closest('[data-id]')?.dataset.id);
     const action = button.dataset.action;
-    if (action === 'add') openForm(button.dataset.occasion ? { occasion: button.dataset.occasion } : name === 'events' ? { stage: filters.stage && filters.stage !== 'all' ? filters.stage : 'wedding' } : {});
+    if (action === 'amount-save') { saveAmount(button.closest('.amount-wrap').querySelector('[data-amount]')); return; }
+    if (action === 'cost-skip') { askingCost = null; render(); return; }
+    if (action === 'add') openForm(button.dataset.occasion ? { occasion: button.dataset.occasion } : newRecord());
     if (action === 'close') { editing = null; render(); }
     if (action === 'edit' && record) openForm(record);
     if (action === 'toggle' && record && config.doneToggle) {
@@ -789,7 +819,14 @@
       record.updatedAt = record.progressAt = new Date().toISOString();
       persist();
       log(record, isDone(record) ? 'done' : 'status', isDone(record) ? `marked ${labelFor('status', record.status)}` : `moved back to ${labelFor('status', record.status)}`);
+      // Just bought or booked with no price yet: ask what it cost, right on the card
+      askingCost = isDone(record) && hasAmount && config.tracksWork && !hasValue(record.amount) ? record.id : (askingCost === record.id ? null : askingCost);
       render();
+      if (askingCost === record.id) {
+        const box = mount.querySelector(`[data-id="${CSS.escape(record.id)}"] .cost-ask input`);
+        box?.focus({ preventScroll: true });
+        box?.closest('.cost-ask').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       const milestone = isDone(record) && milestoneFor(record);
       const thanks = isDone(record) ? thankAction(record) : undefined;
       if (milestone) app.celebrate(milestone, thanks);
@@ -852,6 +889,7 @@
   });
 
   mount.addEventListener('change', event => {
+    if (event.target.matches('input[name="suggestion"], input[name="linked"]')) { updatePickerButton(event.target.form); return; }
     const key = event.target.dataset.filter;
     if (key) { filters[key] = event.target.value; render(); return; }
     if ('ritual' in event.target.dataset) {
@@ -876,6 +914,12 @@
     const id = event.target.closest('[data-id]')?.dataset.id;
     if (id) event.target.open ? openRituals.add(id) : openRituals.delete(id);
   }, true);
+  mount.addEventListener('pointerdown', event => { if (event.target.closest('.amount-save')) event.preventDefault(); });
+  mount.addEventListener('input', event => {
+    if (!('amount' in event.target.dataset)) return;
+    const save = event.target.closest('.amount-wrap')?.querySelector('.amount-save');
+    if (save) save.hidden = event.target.value === event.target.defaultValue;
+  });
   mount.addEventListener('keydown', event => {
     if (event.key === 'Enter' && 'amount' in event.target.dataset) { event.preventDefault(); event.target.blur(); }
   });
@@ -920,6 +964,19 @@
       render();
       mount.querySelector(`[data-id="${CSS.escape(record.id)}"] .ritual-add input`)?.focus();
       app.showToast(`Ritual added to ${record.name}.`);
+      return;
+    }
+    if ('costAsk' in event.target.dataset) {
+      const record = records.find(item => item.id === event.target.closest('[data-id]')?.dataset.id);
+      const amount = Number(form.get('amount'));
+      if (!record || form.get('amount') === '' || Number.isNaN(amount) || amount < 0) { app.showToast('Enter a cost of 0 or more.'); return; }
+      const before = record.amount;
+      record.amount = amount;
+      record.updatedAt = new Date().toISOString();
+      log(record, 'cost', costText(before, amount));
+      askingCost = null;
+      persist(); render();
+      app.showToast(`Cost saved: ${money(amount)}`);
       return;
     }
     if ('memoryForm' in event.target.dataset) {

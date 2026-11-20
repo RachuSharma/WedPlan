@@ -218,34 +218,69 @@
 
   /* ---------- Phones and tablets: tab bar along the bottom, in thumb reach ----------
      Built from the sidebar links so icons and counts stay in one place.
-     The four most-used pages get a tab; "More" opens the full sidebar. */
+     Every page gets a tab; the bar scrolls sideways (user testing: going through "More" was too hidden). */
   (function bottomTabs() {
     if (!sidebar || !scrim) return;
-    const tabPages = ['index.html', 'events.html', 'tasks.html', 'guests.html'];
     const shortNames = { Overview: 'Home' };
-    const links = tabPages.map(page => sidebar.querySelector(`.sidebar-nav a[href$="${page}"]`)).filter(Boolean);
+    const links = [...sidebar.querySelectorAll('a.nav-link')];
     if (!links.length) return;
-    const onTab = links.some(link => link.classList.contains('active'));
-    const tabHtml = link => {
+    const tabHtml = (link, extra = '') => {
       const label = link.querySelector('span')?.textContent.trim() || '';
       const count = link.querySelector('[data-nav-count]')?.dataset.navCount;
-      return `<a class="tab-link${link.classList.contains('active') ? ' active' : ''}" href="${link.getAttribute('href')}"${link.classList.contains('active') ? ' aria-current="page"' : ''}>
+      return `<a class="tab-link${extra}${link.classList.contains('active') ? ' active' : ''}" href="${link.getAttribute('href')}"${link.classList.contains('active') ? ' aria-current="page"' : ''}>
         <span class="tab-icon">${link.querySelector('svg')?.outerHTML || ''}${count ? `<i class="tab-count" data-nav-count="${count}" hidden></i>` : ''}</span><span class="tab-label">${shortNames[label] || label}</span></a>`;
     };
     const bar = document.createElement('nav');
     bar.className = 'tab-bar';
     bar.setAttribute('aria-label', 'Quick navigation');
-    bar.innerHTML = links.map(tabHtml).join('') + `<button class="tab-link${onTab ? '' : ' active'}" type="button" data-tab-more aria-expanded="false" aria-controls="sidebar">
-        <span class="tab-icon"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span><span class="tab-label">More</span></button>`;
+    // Home is pinned on the left so it's one tap away from every page; the other pages scroll beside it
+    const [home, ...rest] = links;
+    bar.innerHTML = `${tabHtml(home, ' tab-home')}<div class="tab-scroll-wrap"><div class="tab-scroll">${rest.map(link => tabHtml(link)).join('')}</div>
+      <button class="tab-arrow tab-arrow-left" type="button" data-arrow="‹" aria-label="Show earlier pages" tabindex="-1"></button>
+      <button class="tab-arrow tab-arrow-right" type="button" data-arrow="›" aria-label="Show more pages" tabindex="-1"></button></div>`;
     document.body.append(bar);
     document.body.classList.add('has-tab-bar');
-    const more = bar.querySelector('[data-tab-more]');
-    more.addEventListener('click', () => {
-      const open = !sidebar.classList.contains('open');
-      setMenu(open);
-      more.setAttribute('aria-expanded', String(open));
-    });
-    scrim.addEventListener('click', () => more.setAttribute('aria-expanded', 'false'));
+    // Show the current page's tab, and fade the edge that has more tabs behind it
+    const scroller = bar.querySelector('.tab-scroll');
+    const edges = () => {
+      bar.classList.toggle('more-right', scroller.scrollLeft + scroller.clientWidth < scroller.scrollWidth - 4);
+      bar.classList.toggle('more-left', scroller.scrollLeft > 4);
+    };
+    scroller.querySelector('.tab-link.active')?.scrollIntoView({ inline: 'center', block: 'nearest' });
+    scroller.addEventListener('scroll', edges, { passive: true });
+    window.addEventListener('resize', edges);
+    edges();
+    // Slide the bar to a position (own animation, so it works the same on every phone)
+    const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    function glide(to, done) {
+      const from = scroller.scrollLeft;
+      const target = Math.max(0, Math.min(to, scroller.scrollWidth - scroller.clientWidth));
+      if (calm) { scroller.scrollLeft = target; edges(); done?.(); return; }
+      const begin = performance.now();
+      let started = false;
+      scroller.style.scrollSnapType = 'none';
+      const step = now => {
+        started = true;
+        const t = Math.min((now - begin) / 380, 1);
+        scroller.scrollLeft = from + (target - from) * (1 - Math.pow(1 - t, 3));
+        if (t < 1) requestAnimationFrame(step);
+        else { scroller.style.scrollSnapType = ''; edges(); done?.(); }
+      };
+      requestAnimationFrame(step);
+      // If the browser isn't drawing frames (e.g. a background tab), just jump there
+      window.setTimeout(() => { if (!started) { scroller.scrollLeft = target; scroller.style.scrollSnapType = ''; edges(); done?.(); } }, 150);
+    }
+    // Arrows on the faded edges slide to the next few tabs
+    bar.querySelector('.tab-arrow-right').addEventListener('click', () => glide(scroller.scrollLeft + scroller.clientWidth * 0.7));
+    bar.querySelector('.tab-arrow-left').addEventListener('click', () => glide(scroller.scrollLeft - scroller.clientWidth * 0.7));
+    // First visit on this device: slide the bar a little and back, so people see it moves (user testing)
+    if (!calm && !storage?.get('tabsHinted', false) && scroller.scrollWidth > scroller.clientWidth + 4) {
+      window.setTimeout(() => {
+        const start = scroller.scrollLeft;
+        glide(start + 110, () => window.setTimeout(() => glide(start), 350));
+        storage?.set('tabsHinted', true);
+      }, 900);
+    }
   })();
 
   /* ---------- First visit: send people to set up their wedding ---------- */
@@ -288,7 +323,12 @@
     node.setAttribute('aria-label', `${value} open`);
   });
   document.querySelectorAll('[data-wedding-location]').forEach(node => { node.textContent = profile.location || 'Location'; });
-  document.querySelectorAll('[data-wedding-date]').forEach(node => { if (profile.weddingDate) node.textContent = withBS(longDate(profile.weddingDate), profile.weddingDate); });
+  // The BS part stays on one line, so a narrow screen wraps it as a whole
+  document.querySelectorAll('[data-wedding-date]').forEach(node => {
+    if (!profile.weddingDate) return;
+    const bs = bsLabel(profile.weddingDate);
+    node.innerHTML = `${escape(longDate(profile.weddingDate))}${bs ? ` <span class="bs-inline">· ${escape(bs)}</span>` : ''}`;
+  });
 
   const daysNode = document.querySelector('[data-days-remaining]');
   if (daysNode && profile.weddingDate) {
@@ -296,6 +336,34 @@
     daysNode.textContent = days;
     document.querySelector('[data-countdown]')?.setAttribute('aria-label', `${days} days until the wedding`);
   }
+
+  /* ---------- One-line tip under each page's title ----------
+     Says what the page is for and the first thing to do. Closing it hides it for good on this device. */
+  const pageTips = {
+    events: 'Tick the ceremonies your family celebrates, then tap Add. Open a ceremony to tick off its rituals.',
+    tasks: 'Add what needs doing and who is doing it. Tick ✓ when it’s done.',
+    guests: 'Add each family and how many people are coming. Change the status when they’re invited or confirm.',
+    budget: 'Shopping and booking prices are counted here automatically. Add only extra costs below.',
+    shopping: 'Tick suggestions or add your own. Tick ✓ when bought and add the price.',
+    bookings: 'Add what to book and who is handling it. Tap Remind if nothing happens.',
+    helpers: 'Give each duty to a family member. Tick ✓ when they’ve said yes.',
+    settings: 'Change your wedding details here, and download a backup to keep your plan safe.'
+  };
+  (function pageTip() {
+    const page = document.body.dataset.page;
+    const header = document.querySelector('.page-header');
+    const hidden = storage?.get('tipsHidden', []) || [];
+    if (!pageTips[page] || !header || hidden.includes(page)) return;
+    const tip = document.createElement('p');
+    tip.className = 'page-tip';
+    tip.innerHTML = `<span class="page-tip-icon" aria-hidden="true">💡</span><span>${escape(pageTips[page])}</span><button type="button" class="guide-close" aria-label="Close this tip">×</button>`;
+    header.insertAdjacentElement('afterend', tip);
+    tip.querySelector('button').addEventListener('click', () => {
+      storage?.set('tipsHidden', [...new Set([...hidden, page])]);
+      tip.remove();
+      showToast('Tip hidden.', { label: 'Undo', run: () => { storage?.set('tipsHidden', hidden); header.insertAdjacentElement('afterend', tip); } });
+    });
+  })();
 
   /* ---------- Notifications: the bell opens reminders + recent updates ---------- */
   const reminderButton = document.querySelector('#reminder-button');

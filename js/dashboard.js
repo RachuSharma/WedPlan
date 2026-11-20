@@ -13,21 +13,23 @@
     if (!node) return;
     const hasPerson = key => list(key).some(item => item.responsible);
     const steps = [
-      { done: list('events').length > 0, title: 'Choose your ceremonies', text: 'Pick Tika Talo, Swayamvar, Bidaai and the others your families will celebrate. Their rituals come with them.', href: 'pages/events.html', cta: 'Choose ceremonies' },
-      { done: list('guests').length > 0, title: 'Add your guests', text: 'Start with close family. You can add the rest little by little.', href: 'pages/guests.html', cta: 'Add guests' },
-      { done: list('helpers').length > 0 || hasPerson('shopping') || hasPerson('bookings'), title: 'Share out the work', text: 'Ask family to help: someone for the gifts, someone for the pandit’s puja items, someone for the guests.', href: 'pages/helpers.html', cta: 'Hand out duties' }
+      { done: list('events').length > 0, title: 'Choose your ceremonies', href: 'pages/events.html' },
+      { done: list('guests').length > 0, title: 'Add your guests', href: 'pages/guests.html' },
+      { done: list('helpers').length > 0 || hasPerson('shopping') || hasPerson('bookings'), title: 'Share out the work', href: 'pages/helpers.html' }
     ];
     const doneCount = steps.filter(step => step.done).length;
     if (storage?.get('guideHidden', false) || doneCount === steps.length) { node.hidden = true; return; }
     const next = steps.findIndex(step => !step.done);
     node.hidden = false;
-    node.innerHTML = `<div class="start-guide-head"><div><p class="eyebrow">START HERE</p><h2 id="start-guide-title">Three small steps to begin</h2><p>${doneCount ? `${doneCount} of ${steps.length} done. Lovely.` : 'Do them in any order. Each one takes a few minutes.'}</p></div></div>
-      <ol class="start-steps">${steps.map((step, i) => `<li class="start-step${step.done ? ' is-done' : ''}${i === next ? ' is-next' : ''}">
-        <span class="start-step-mark" aria-hidden="true">${step.done ? '✓' : i + 1}</span>
-        <div class="start-step-copy"><strong>${step.title}${step.done ? '<span class="visually-hidden"> (done)</span>' : ''}</strong><p>${step.text}</p></div>
-        ${step.done ? '' : i === next ? `<a class="primary-button" href="${step.href}">${step.cta}</a>` : `<a class="start-step-link" href="${step.href}">${step.cta} <span aria-hidden="true">→</span></a>`}
-      </li>`).join('')}</ol>
-      <div class="start-guide-foot"><button class="text-button" type="button" data-guide="hide">Hide this guide</button></div>`;
+    // Compact: one short row per step (user testing: the big guide filled the whole phone screen)
+    node.innerHTML = `<div class="start-guide-head"><h2 id="start-guide-title">Start here <span>· ${doneCount} of ${steps.length} done</span></h2>
+        <button class="guide-close" type="button" data-guide="hide" aria-label="Hide the start guide">×</button></div>
+      <ol class="start-steps">${steps.map((step, i) => {
+        const mark = `<span class="start-step-mark" aria-hidden="true">${step.done ? '✓' : i + 1}</span>`;
+        return step.done
+          ? `<li class="start-step is-done">${mark}<span class="start-step-title">${step.title}<span class="visually-hidden"> (done)</span></span></li>`
+          : `<li><a class="start-step${i === next ? ' is-next' : ''}" href="${step.href}">${mark}<span class="start-step-title">${step.title}</span>${i === next ? '<span class="start-step-go">Start <span aria-hidden="true">›</span></span>' : '<span class="start-step-arrow" aria-hidden="true">›</span>'}</a></li>`;
+      }).join('')}</ol>`;
   }
   document.querySelector('#start-guide')?.addEventListener('click', event => {
     if (!event.target.closest('[data-guide="hide"]')) return;

@@ -507,7 +507,7 @@ a.cost-source:hover { text-decoration: underline; text-underline-offset: 2px; }
 .amount-input span { font-size: var(--text-xs); font-weight: 600; color: var(--muted); }
 .amount-input input { width: 110px; border: 0; outline: none; background: transparent; font: 600 var(--text-md) var(--font-body); color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
 .amount-input input::placeholder { font-weight: 500; color: #9a8b91; }
-@media (max-width: 640px) { .record-card { flex-wrap: wrap; } .record-card .amount-input { order: 3; } .record-card .record-actions { order: 4; margin-left: auto; } }
+@media (max-width: 640px) { .record-card { flex-wrap: wrap; } .record-card .amount-wrap { order: 3; } .record-card .record-actions { order: 4; margin-left: auto; } .record-card .cost-ask { order: 5; } }
 .collection-page + .cost-list { margin-top: 28px; }
 @media (max-width: 640px) { .cost-row { flex-wrap: wrap; } .cost-row .record-actions { margin-left: auto; } }
 .cost-row-amount strong { display: block; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
@@ -782,6 +782,13 @@ body::before {
   .wedding-banner.has-photo { flex-direction: column; align-items: stretch; padding: 0; min-height: 0; margin-bottom: 28px; }
   .banner-photo { position: relative; width: 100%; height: 180px; }
   .banner-photo::before { background: linear-gradient(0deg, var(--red-deep) 0%, rgba(163, 18, 26, 0) 55%); }
+  /* The red part starts in exactly the colour the photo fades into, so there's no light line where they meet;
+     the warm glow sits at the bottom instead of the top-left corner */
+  .wedding-banner.has-photo { background: radial-gradient(130% 70% at 0% 100%, #c41c25 0%, rgba(196, 28, 37, 0) 70%), var(--red-deep); }
+  .banner-photo img { margin-bottom: -1px; }
+  /* Date and place each on their own row, with the icon beside the text (a long BS date used to wrap away from its icon) */
+  .banner-date { display: grid; grid-template-columns: 18px 1fr; align-items: center; gap: 8px 10px; }
+  .banner-date .icon + span + .icon { margin-left: 0; }
   .has-photo .banner-copy { order: 2; padding: 6px 20px 24px; }
   .banner-copy h2 { font-size: 25px; }
   .countdown { top: 116px; right: 14px; transform: none; padding: 10px 16px; }
@@ -851,15 +858,44 @@ body::before {
   :root { --tab-bar: calc(64px + env(safe-area-inset-bottom, 0px)); }
   .tab-bar {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
-    display: grid; grid-template-columns: repeat(5, 1fr);
-    height: var(--tab-bar); padding: 0 6px env(safe-area-inset-bottom, 0px);
+    height: var(--tab-bar); padding: 0 0 env(safe-area-inset-bottom, 0px);
+    display: flex;
     border-top: 1px solid var(--line); background: rgba(255, 255, 255, .94);
     -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
     box-shadow: 0 -6px 24px rgba(110, 11, 16, .07);
   }
+  /* Home is pinned on the left; all other pages sit in one row that scrolls sideways */
+  .tab-link.tab-home { flex: 0 0 auto; width: 64px; height: 64px; border-right: 1px solid var(--line); }
+  .tab-scroll-wrap { position: relative; flex: 1; min-width: 0; }
+  .tab-scroll {
+    display: flex; height: 64px; padding: 0 4px; overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity; scrollbar-width: none;
+  }
+  .tab-scroll::-webkit-scrollbar { display: none; }
+  .tab-bar.more-right .tab-scroll { -webkit-mask-image: linear-gradient(90deg, #000 82%, transparent); mask-image: linear-gradient(90deg, #000 82%, transparent); }
+  .tab-bar.more-left .tab-scroll { -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%); mask-image: linear-gradient(90deg, transparent, #000 18%); }
+  .tab-bar.more-left.more-right .tab-scroll { -webkit-mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent); mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent); }
+  /* The arrow looks small, but the whole edge strip (full bar height) is the tap target,
+     so a tap near it never hits the half-hidden tab behind it (user testing) */
+  .tab-arrow {
+    position: absolute; top: 0; bottom: 0; z-index: 2; display: none; place-items: center;
+    width: 44px; height: 64px; padding: 0; border: 0; cursor: pointer;
+    color: var(--brand); font: 700 22px/1 var(--font-body);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tab-arrow::before {
+    content: ""; position: absolute; top: 17px; width: 30px; height: 30px; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--surface); box-shadow: 0 2px 8px rgba(110, 11, 16, .15);
+  }
+  .tab-arrow::after { content: attr(data-arrow); position: relative; margin-top: -2px; }
+  .tab-arrow:active::before { background: var(--brand-soft); }
+  .tab-arrow-left { left: 0; background: linear-gradient(90deg, rgba(255, 255, 255, .96) 55%, rgba(255, 255, 255, 0)); }
+  .tab-arrow-right { right: 0; background: linear-gradient(270deg, rgba(255, 255, 255, .96) 55%, rgba(255, 255, 255, 0)); }
+  .tab-bar.more-left .tab-arrow-left, .tab-bar.more-right .tab-arrow-right { display: grid; }
   .tab-link {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-    min-width: 0; padding: 0; border: 0; background: none;
+    flex: 0 0 auto; width: max(calc((100vw - 72px) / 4.5), 64px); scroll-snap-align: start; /* Home + 4½ tabs: the half tab shows there's more */
+    padding: 0; border: 0; background: none;
     font-size: 11.5px; font-weight: 600; color: var(--muted);
     -webkit-tap-highlight-color: transparent;
   }
@@ -870,7 +906,7 @@ body::before {
   .tab-link:active .tab-icon { background: var(--blush); }
   .tab-link:focus-visible { outline: none; }
   .tab-link:focus-visible .tab-icon { box-shadow: var(--focus); }
-  .tab-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tab-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; letter-spacing: -.1px; }
   .tab-count { position: absolute; top: -3px; right: 6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--brand); color: #fff; font: 700 11px/18px var(--font-body); font-style: normal; text-align: center; }
 
   /* The tab bar replaces the menu button; leave room so nothing hides behind it */
@@ -887,13 +923,6 @@ body::before {
   .page-header { margin-bottom: 18px; }
   .page-header h1 { font-size: 26px; }
 
-  /* "+ Add" floats above the tab bar, so it is always one thumb-tap away */
-  .has-tab-bar .collection-heading .primary-button,
-  .has-tab-bar .task-manager-heading .primary-button {
-    position: fixed; right: 16px; bottom: calc(var(--tab-bar) + 16px); z-index: 14; /* below the menu drawer and its scrim */
-    width: auto; min-height: 52px; padding: 0 22px; border-radius: 26px;
-    box-shadow: 0 10px 24px rgba(179, 20, 28, .32);
-  }
   .ritual-add input { font-size: 16px; }
   .has-tab-bar .topbar { padding: 0 16px; }
 
@@ -921,33 +950,24 @@ body::before {
 .toast-action { min-height: 40px; padding: 0 14px; border: 0; border-radius: 8px; background: rgba(255, 255, 255, .14); color: var(--gold-bright); font: 700 var(--text-sm) var(--font-body); cursor: pointer; white-space: nowrap; }
 .toast-action:hover, .toast-action:focus-visible { background: rgba(255, 255, 255, .24); }
 
-/* Start here guide on the Overview */
-.start-guide { margin-bottom: 36px; padding: 22px 24px; border-left: 4px solid var(--gold); }
-.start-guide-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
-.start-guide-head h2 { margin: 2px 0 4px; font: 600 22px var(--font-display); color: var(--maroon); }
-.start-guide-head p { color: var(--muted); font-size: var(--text-sm); }
-.start-guide .text-button { flex: none; min-height: 40px; padding: 0 4px; border: 0; background: none; color: var(--muted); font: 600 var(--text-sm) var(--font-body); text-decoration: underline; cursor: pointer; }
-.start-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.start-step { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
+/* Start here guide on the Overview: small card, one short row per step */
+.start-guide { margin-bottom: 28px; padding: 12px 14px 14px; border-left: 4px solid var(--gold); }
+.start-guide-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.start-guide-head h2 { font: 600 17px var(--font-display); color: var(--maroon); }
+.start-guide-head h2 span { font: 500 var(--text-sm) var(--font-body); color: var(--muted); }
+.guide-close { flex: none; width: 36px; height: 36px; margin: -6px -6px -6px 0; border: 0; border-radius: 50%; background: none; color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer; }
+.guide-close:hover { background: var(--surface-soft); color: var(--ink); }
+.start-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.start-step { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); text-decoration: none; font-size: 15px; font-weight: 600; }
+a.start-step:hover { border-color: var(--line-strong); }
 .start-step.is-next { border-color: var(--brand); background: var(--brand-soft); }
-.start-step.is-done { background: var(--green-soft); border-color: transparent; }
-.start-step.is-done .start-step-copy p { display: none; }
-.start-step-mark { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--line-strong); font-weight: 700; color: var(--ink-2); }
+.start-step.is-done { border-color: transparent; background: var(--green-soft); color: var(--muted); font-weight: 500; }
+.start-step-mark { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line-strong); font-size: 12px; font-weight: 700; color: var(--ink-2); }
 .start-step.is-next .start-step-mark { border-color: var(--brand); background: var(--brand); color: #fff; }
 .start-step.is-done .start-step-mark { border-color: var(--green); background: var(--green); color: #fff; }
-.start-step-copy { flex: 1 1 150px; min-width: 0; }
-.start-step-copy strong { display: block; color: var(--ink); }
-.start-step-copy p { margin-top: 2px; font-size: var(--text-sm); color: var(--muted); }
-.start-step .primary-button { flex: none; margin: 0; text-decoration: none; }
-.start-step-link { flex: none; min-height: 40px; display: inline-flex; align-items: center; font-size: var(--text-sm); font-weight: 600; color: var(--brand); }
-.start-step:not(.is-next) .start-step-copy p { display: none; }
-.start-guide-foot { display: flex; justify-content: flex-end; margin-top: 8px; }
-@media (max-width: 640px) {
-  .start-guide { padding: 18px 16px; margin-bottom: 28px; }
-  .start-step { flex-wrap: wrap; }
-  .start-step .primary-button { width: 100%; justify-content: center; }
-  .start-step-link { margin-left: 46px; }
-}
+.start-step-title { flex: 1; min-width: 0; }
+.start-step-go { flex: none; padding: 5px 12px; border-radius: 16px; background: var(--brand); color: #fff; font-size: var(--text-sm); font-weight: 700; }
+.start-step-arrow { flex: none; color: var(--muted); font-size: 20px; }
 
 /* Celebration: petals fall over the page, then are removed */
 .petal-shower { position: fixed; inset: 0; z-index: 70; overflow: hidden; pointer-events: none; }
@@ -1004,3 +1024,23 @@ body::before {
 .banner-nepali { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font: 700 clamp(30px, 3.2vw, 42px)/1.25 'Amita', 'Kohinoor Devanagari', 'Devanagari Sangam MN', serif; color: var(--gold-bright); text-shadow: 0 2px 10px rgba(0, 0, 0, .18); }
 .banner-nepali span { font-size: .45em; opacity: .85; }
 @media (max-width: 640px) { .banner-nepali { font-size: 30px; } }
+
+/* Suggestions: the "Add selected" bar stays on screen while ticking */
+.picker-actions { position: sticky; bottom: 12px; z-index: 6; margin: 14px -12px 12px; padding: 10px 12px; border-radius: var(--radius-sm); background: rgba(255, 255, 255, .96); box-shadow: 0 -4px 18px rgba(110, 11, 16, .10); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.has-tab-bar .picker-actions { bottom: calc(var(--tab-bar) + 10px); }
+.primary-button:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; transform: none; }
+.primary-button:disabled:hover { background: var(--brand); }
+
+/* Cost box with its Save button, and the "What did it cost?" box after ticking */
+.amount-wrap { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.amount-save { min-height: 40px; padding: 0 14px; border: 0; border-radius: 10px; background: var(--brand); color: #fff; font: 700 var(--text-sm) var(--font-body); cursor: pointer; }
+.amount-save[hidden] { display: none; }
+.cost-ask { width: 100%; }
+.cost-ask .amount-input input { font-size: 16px; }
+
+/* One-line tip under each page's title (closable) */
+.page-tip { display: flex; align-items: flex-start; gap: 8px; margin: -12px 0 22px; padding: 8px 6px 8px 12px; border-radius: var(--radius-sm); background: var(--gold-soft); font-size: var(--text-sm); line-height: 1.45; color: var(--ink-2); }
+.page-tip > span:nth-child(2) { flex: 1; padding-top: 2px; }
+.page-tip-icon { flex: none; padding-top: 2px; }
+.page-tip .guide-close { width: 32px; height: 32px; margin: -2px 0; font-size: 20px; }
+@media (max-width: 640px) { .page-tip { margin: -6px 0 18px; } }
